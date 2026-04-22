@@ -1,155 +1,135 @@
+// author: Noel Kurian
+// date created: 2026-04-17
+// date modified: 2026-04-19
+// description: Allows users to scroll through photos in a photo album
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Description: A photo album application that cycles through local images.
- * Uses a folder named 'my_photos' to source image files and allows continuous navigation.
- */
 public class PhotoAlbumKur implements ActionListener 
 {
     JFrame frame;
     JPanel contentPane;
     JLabel label;
-    JButton nextButton;
-    JButton backButton;
+    JButton nextButton, backButton;
     
-    // Additional fields for image logic
-    List<String> imagePaths = new ArrayList<>();
-    int currentIndex = 0;
+    // This variable keeps track of which photo is currently on the screen
+    int currentPhoto = 1;
 
     public PhotoAlbumKur() 
     {
-        // Create and set up the frame
+        // Standard window setup
         frame = new JFrame("PhotoAlbumKur");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Create a content pane with a BorderLayout and empty borders
+        // Setting up the content pane with a white background and vertical layout
         contentPane = new JPanel();
-        contentPane.setLayout(new BorderLayout());
-        contentPane.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.PAGE_AXIS));
+        contentPane.setBackground(Color.white);
+        contentPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Load images from the local file folder
-        loadImagesFromFolder("my_photos");
-
-        // Create and add label that holds the image and is centered
-        label = new JLabel("", SwingConstants.CENTER);
+        // Create the label where the photos will be displayed
+        label = new JLabel("");
         label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        label.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
         
-        if (imagePaths.isEmpty()) {
-            label.setText("No images found. Please add files to the 'my_photos' folder.");
-        } else {
-            updateImage();
-        }
-        contentPane.add(label, BorderLayout.CENTER);
+        // Start the app by loading the very first image
+        updateImage(1); 
+        contentPane.add(label);
 
-        // Create a panel for the control buttons
-        JPanel buttonPanel = new JPanel();
-        
-        // Create and add back button that is centered
+        // Setup the Back button to move through the album in reverse
         backButton = new JButton("Back");
-        backButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
-        backButton.setActionCommand("Back");
         backButton.addActionListener(this);
-        buttonPanel.add(backButton);
+        backButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        contentPane.add(backButton);
 
-        // Create and add next button that is centered
+        // Setup the Next button to move forward through the album
         nextButton = new JButton("Next");
-        nextButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
-        nextButton.setActionCommand("Next");
         nextButton.addActionListener(this);
-        buttonPanel.add(nextButton);
+        nextButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        contentPane.add(nextButton);
 
-        contentPane.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Add content pane to frame
+        // Finalize the frame display
         frame.setContentPane(contentPane);
-
-        // Size and then display the frame
-        frame.setSize(800, 600);
+        frame.pack();
         frame.setVisible(true);
     }
 
     /**
-     * Pre-condition: folderPath must be a valid directory name string.
-     * Post-condition: Fills the imagePaths list with absolute paths of found images.
+     * This method handles picking the right file name and resizing it
+     * so it fits nicely in the window.
      */
-    private void loadImagesFromFolder(String folderPath) 
+    private void updateImage(int photoNum) 
     {
-        File folder = new File(folderPath);
-        if (!folder.exists()) {
-            folder.mkdir();
+        String fileName = "";
+        
+        // Use a switch to map the current number to the actual file on the computer
+        switch (photoNum) 
+        {
+            case 1: fileName = "Image1.jpg"; break;
+            case 2: fileName = "Image2.jpg"; break;
+            case 3: fileName = "Image3.jpg"; break;
+            case 4: fileName = "Image4.jpg"; break;
+            case 5: fileName = "image5.jpg"; break;
+            case 6: fileName = "image6.jpg"; break;
         }
 
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles != null) {
-            for (File file : listOfFiles) {
-                String name = file.getName().toLowerCase();
-                if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg")) {
-                    imagePaths.add(file.getAbsolutePath());
-                }
-            }
+        // Create an icon from the file name
+        ImageIcon icon = new ImageIcon(fileName);
+        
+        // Check if the image actually exists; if not, it prints a message to the console
+        if (icon.getImageLoadStatus() != MediaTracker.COMPLETE) {
+            System.out.println("Error: Could not find " + fileName);
         }
-    }
 
-    /**
-     * Pre-condition: imagePaths list must not be empty.
-     * Post-condition: Updates the label with the image at the current index.
-     */
-    private void updateImage() 
-    {
-        ImageIcon icon = new ImageIcon(imagePaths.get(currentIndex));
-        // Scaling the image to fit the label area
-        Image img = icon.getImage().getScaledInstance(700, 450, Image.SCALE_SMOOTH);
+        // This part shrinks or stretches the image to exactly 500x400 pixels
+        Image img = icon.getImage().getScaledInstance(500, 400, Image.SCALE_SMOOTH);
         label.setIcon(new ImageIcon(img));
     }
 
     /**
-     * Description: Handle button click action event.
-     * Pre-condition: Action event is Next or Back.
-     * Post-condition: Clicked button changes the displayed image.
+     * This method runs whenever a button is clicked.
+     * It handles the logic for moving between photos 1 and 6.
      */
     public void actionPerformed(ActionEvent event) 
     {
-        String eventName = event.getActionCommand();
+        String cmd = event.getActionCommand();
 
-        if (imagePaths.isEmpty()) return;
-
-        if (eventName.equals("Next")) 
+        if (cmd.equals("Next")) 
         {
-            currentIndex = (currentIndex + 1) % imagePaths.size();
+            // If we aren't at the end, go up. If we are at 6, loop back to 1.
+            if (currentPhoto < 6) { 
+                currentPhoto++; 
+            } else { 
+                currentPhoto = 1; 
+            }
         } 
-        else if (eventName.equals("Back")) 
+        else if (cmd.equals("Back")) 
         {
-            currentIndex = (currentIndex - 1 + imagePaths.size()) % imagePaths.size();
+            // If we aren't at the start, go down. If we are at 1, loop back to 6.
+            if (currentPhoto > 1) { 
+                currentPhoto--; 
+            } else { 
+                currentPhoto = 6; 
+            }
         }
         
-        updateImage();
+        // After updating the number, refresh the label with the new image
+        updateImage(currentPhoto);
     }
 
-    /**
-     * Description: Create and show the GUI.
-     * Post-condition: Look and Feel decoration is enabled before instantiation.
-     */
+    // Boilerplate code to get the GUI running
     private static void runGUI() 
     {
-        JFrame.setDefaultLookAndFeelDecorated(false);
+        JFrame.setDefaultLookAndFeelDecorated(true);
         new PhotoAlbumKur();
     }
 
     public static void main(String[] args) 
     {
-        // Methods that create and show a GUI should be run from an event-dispatching thread.
+        // Thread safety for Java Swing apps
         javax.swing.SwingUtilities.invokeLater(new Runnable() 
         {
-            public void run() 
-            {
-                runGUI();
-            }
+            public void run() { runGUI(); }
         });
     }
 }
